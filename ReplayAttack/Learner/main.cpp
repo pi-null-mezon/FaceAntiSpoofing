@@ -93,10 +93,10 @@ void load_mini_batch (
                     cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat *= 0.85f + 0.3f*rnd.get_random_float();
+                    _tmpmat *= 0.5f + 1.0f*rnd.get_random_float();
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = addNoise(_tmpmat,cvrng,0,13);
+                    _tmpmat = addNoise(_tmpmat,cvrng,0,15);
 
                 dlib::matrix<dlib::rgb_pixel> _dlibtmpimg = cvmat2dlibmatrix<dlib::rgb_pixel>(_tmpmat);
                 dlib::disturb_colors(_dlibtmpimg,rnd);

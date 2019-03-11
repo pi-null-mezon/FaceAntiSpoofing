@@ -1,5 +1,5 @@
-**Trained models ([Dlib's](http://dlib.net/ml.html) DNN format) can be found here:**
+Trained models ([Dlib's](http://dlib.net/ml.html) DNN format) can be downloaded from:
 
-1) For **Replay Attack**: 
+1) For "replay attack" 
 
-2) For **Print Attack**: 
+2) For "print attack" 

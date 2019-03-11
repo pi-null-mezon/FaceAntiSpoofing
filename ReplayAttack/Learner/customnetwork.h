@@ -83,7 +83,7 @@ using net_type =    loss_multiclass_log<fc<2,
 // testing network type (replaced batch normalization with fixed affine transforms)
 using anet_type =   loss_multiclass_log<fc<2,
                             avg_pool_everything<adense2<64,FNUM,
-			    avg_pool<2,2,2,2,adense3<64,FNUM,
+							avg_pool<2,2,2,2,adense3<64,FNUM,
                             relu<affine<con<FNUM,5,5,2,2,
                             input_rgb_image
                             >>>>>>>>>;
