@@ -71,7 +71,7 @@ void load_mini_batch (
                     cv::flip(_tmpmat,_tmpmat,1);
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.06,0.06,6,cv::BORDER_REFLECT101,true);
+                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.05,0.05,5,cv::BORDER_REFLECT101,false);
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = distortimage(_tmpmat,cvrng,0.03,cv::INTER_CUBIC,cv::BORDER_REFLECT101);
 
@@ -93,10 +93,10 @@ void load_mini_batch (
                     cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat *= 0.85f + 0.3f*rnd.get_random_float();
+                    _tmpmat *= 0.5f + 1.0f*rnd.get_random_float();
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = addNoise(_tmpmat,cvrng,0,13);
+                    _tmpmat = addNoise(_tmpmat,cvrng,0,15);
 
                 dlib::matrix<dlib::rgb_pixel> _dlibtmpimg = cvmat2dlibmatrix<dlib::rgb_pixel>(_tmpmat);
                 dlib::disturb_colors(_dlibtmpimg,rnd);
@@ -130,7 +130,7 @@ float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dl
     std::vector<matrix<dlib::rgb_pixel>> images;
     std::vector<unsigned long> labels;
     for(size_t i = 0; i < vacc.size(); ++i) {
-        load_mini_batch(2, 50, rnd, cvrng, _testobjs, images, labels, false);
+        load_mini_batch(2, 50, rnd, cvrng, _testobjs, images, labels, true);
         std::vector<unsigned long> predictedlabels = anet(images);
         for(size_t j = 0; j < images.size(); ++j) {
             if(predictedlabels[j] == labels[j])
