@@ -25,7 +25,7 @@ void QTaskServer::sendEncodedImage(const QByteArray &_encimg)
 {
     if(qtcpclient) {
         QDataStream dso(qtcpclient);
-        dso.setVersion(QDataStream::Qt_5_9);
+        dso.setVersion(QDataStream::Qt_5_0);
         dso << static_cast<quint8>(replayattack::CommandCode::UploadImage);
         dso << static_cast<quint32>(_encimg.size());
         dso.writeRawData(_encimg.data(),_encimg.size());
@@ -37,7 +37,7 @@ void QTaskServer::reportAboutSessionStart()
 {
     if(qtcpclient) {
         QDataStream dso(qtcpclient);
-        dso.setVersion(QDataStream::Qt_5_9);
+        dso.setVersion(QDataStream::Qt_5_0);
         dso << static_cast<quint8>(replayattack::CommandCode::StartSession);
     }
 }
@@ -46,7 +46,7 @@ void QTaskServer::reportAboutSessionEnd()
 {
     if(qtcpclient) {
         QDataStream dso(qtcpclient);
-        dso.setVersion(QDataStream::Qt_5_9);
+        dso.setVersion(QDataStream::Qt_5_0);
         dso << static_cast<quint8>(replayattack::CommandCode::EndSession);
     }
 }
@@ -70,7 +70,7 @@ void QTaskServer::readClientReply()
 {
     QTcpSocket *_tcpsocket = qobject_cast<QTcpSocket*>(sender());
     QDataStream dsi(_tcpsocket);
-    dsi.setVersion(QDataStream::Qt_5_9);
+    dsi.setVersion(QDataStream::Qt_5_0);
 
     if(_tcpsocket->bytesAvailable() < sizeof(quint8))
         return;

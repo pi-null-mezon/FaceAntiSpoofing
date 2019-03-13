@@ -26,7 +26,7 @@ void QTCPClient::notifyAboutImageUpdate()
     imgsizebytes = 0;
     //qDebug("  send notification about img update, cmd code has been dropped");
     QDataStream ods(&tcpsocket);
-    ods.setVersion(QDataStream::Qt_5_9);
+    ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::ImageUpdated);
 }
 
@@ -34,7 +34,7 @@ void QTCPClient::notifyAboutStart()
 {
     commandcode = replayattack::Unknown;
     QDataStream ods(&tcpsocket);
-    ods.setVersion(QDataStream::Qt_5_9);
+    ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::SessionPrepared);
 }
 
@@ -42,7 +42,7 @@ void QTCPClient::notifyAboutEnd()
 {
     commandcode = replayattack::Unknown;
     QDataStream ods(&tcpsocket);
-    ods.setVersion(QDataStream::Qt_5_9);
+    ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::SessionFinished);
 }
 
@@ -52,7 +52,7 @@ void QTCPClient::notifyAboutInvalidImage()
     imgsizebytes = 0;
     //qDebug("  notification about invalid img, cmd code has been dropped");
     QDataStream ods(&tcpsocket);
-    ods.setVersion(QDataStream::Qt_5_9);
+    ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::InvalidImage);
 }
 
@@ -60,7 +60,7 @@ void QTCPClient::readSocket()
 {   
     //qDebug("  readSocket(): bytes available %u", (uint)tcpsocket.bytesAvailable());
     QDataStream ids(&tcpsocket);
-    ids.setVersion(QDataStream::Qt_5_9);
+    ids.setVersion(QDataStream::Qt_5_0);
 
     if(commandcode == replayattack::CommandCode::Unknown) {
         if(tcpsocket.bytesAvailable() < sizeof(quint8))
