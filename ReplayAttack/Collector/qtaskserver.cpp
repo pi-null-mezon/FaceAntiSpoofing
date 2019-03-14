@@ -67,8 +67,9 @@ void QTaskServer::enrollConnection()
 }
 
 void QTaskServer::readClientReply()
-{
+{    
     QTcpSocket *_tcpsocket = qobject_cast<QTcpSocket*>(sender());
+    qDebug("readyRead() emitted, bytes to read: %u", (uint)_tcpsocket->bytesAvailable());
     QDataStream dsi(_tcpsocket);
     dsi.setVersion(QDataStream::Qt_5_0);
 

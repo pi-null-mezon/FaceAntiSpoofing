@@ -72,8 +72,8 @@ void load_mini_batch (
 
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.05,0.05,5,cv::BORDER_REFLECT101,false);
-                if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = distortimage(_tmpmat,cvrng,0.03,cv::INTER_CUBIC,cv::BORDER_REFLECT101);
+                /*if(rnd.get_random_float() > 0.1f)
+                    _tmpmat = distortimage(_tmpmat,cvrng,0.03,cv::INTER_CUBIC,cv::BORDER_REFLECT101);*/
 
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.1f,0.3f,rnd.get_random_float()*180.0f);
@@ -119,18 +119,22 @@ void load_mini_batch (
     }
 }
 
-float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dlib::net_type &_net, bool _beverbose, int iterations=10, size_t _seed=1)
+float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dlib::net_type &_net, bool _beverbose,
+                           const size_t _classes,
+                           const size_t _samples,
+                           const size_t _iterations=10,
+                           const size_t _seed=1)
 {
     anet_type   anet = _net;
     dlib::rand  rnd(_seed);
     cv::RNG     cvrng(_seed);
-    std::vector<float> vacc(iterations,0.0f);
-    std::vector<uint> vright(iterations,0);
-    std::vector<uint> vwrong(iterations,0);
+    std::vector<float> vacc(_iterations,0.0f);
+    std::vector<uint> vright(_iterations,0);
+    std::vector<uint> vwrong(_iterations,0);
     std::vector<matrix<dlib::rgb_pixel>> images;
     std::vector<unsigned long> labels;
     for(size_t i = 0; i < vacc.size(); ++i) {
-        load_mini_batch(2, 50, rnd, cvrng, _testobjs, images, labels, true);
+        load_mini_batch(_classes, _samples, rnd, cvrng, _testobjs, images, labels, true);
         std::vector<unsigned long> predictedlabels = anet(images);
         for(size_t j = 0; j < images.size(); ++j) {
             if(predictedlabels[j] == labels[j])
@@ -140,7 +144,7 @@ float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dl
         }
         vacc[i] = (float)vright[i] / (vright[i] + vwrong[i]);
         if(_beverbose)
-            cout << "iter #" << i << " - accuracy: " << vacc[i] << endl;
+            cout << "iteration #" << i << " - accuracy: " << vacc[i] << endl;
     }
     float acc = 0.0f;
     for(size_t i = 0; i < vacc.size(); ++i)
@@ -318,7 +322,7 @@ int main(int argc, char** argv)
     float acc = -1.0f;
     if(validobjs.size() > 0) {
         cout << "Accuracy evaluation on validation set:" << endl;
-        acc = test_accuracy_on_set(validobjs,net,true);
+        acc = test_accuracy_on_set(validobjs,net,true,classes_per_minibatch,samples_per_class,30);
         cout << "Average validation accuracy: " << acc << endl;
     }
     std::vector<std::vector<string>> testobjs;
@@ -328,7 +332,7 @@ int main(int argc, char** argv)
     }
     if(testobjs.size() > 0) {
         cout << "Accuracy evaluation on test set:" << endl;
-        acc = test_accuracy_on_set(testobjs,net,true);
+        acc = test_accuracy_on_set(testobjs,net,true,classes_per_minibatch,samples_per_class);
         cout << "Average test accuracy: " << acc << endl;
     }
 

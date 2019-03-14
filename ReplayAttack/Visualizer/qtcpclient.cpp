@@ -24,7 +24,7 @@ void QTCPClient::notifyAboutImageUpdate()
 {
     commandcode = replayattack::Unknown;
     imgsizebytes = 0;
-    //qDebug("  send notification about img update, cmd code has been dropped");
+    qDebug("  send notification about img update to the server");
     QDataStream ods(&tcpsocket);
     ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::ImageUpdated);
@@ -50,7 +50,7 @@ void QTCPClient::notifyAboutInvalidImage()
 {
     commandcode = replayattack::Unknown;
     imgsizebytes = 0;
-    //qDebug("  notification about invalid img, cmd code has been dropped");
+    qDebug("  send notification about invalid img to the server");
     QDataStream ods(&tcpsocket);
     ods.setVersion(QDataStream::Qt_5_0);
     ods << static_cast<quint8>(replayattack::ResultCode::InvalidImage);
@@ -75,7 +75,7 @@ void QTCPClient::readSocket()
                 if(tcpsocket.bytesAvailable() < sizeof(quint32))
                     return;
                 ids >> imgsizebytes;
-                //qDebug("  Imgsize: %u",(uint)imgsizebytes);
+                qDebug("  Imgsize: %u",(uint)imgsizebytes);
             }
 
             if((tcpsocket.bytesAvailable() < imgsizebytes) && (imgsizebytes != 0))
@@ -84,7 +84,7 @@ void QTCPClient::readSocket()
             QByteArray _encimg;
             _encimg.resize(imgsizebytes);
             ids.readRawData(_encimg.data(),_encimg.size());
-            //qDebug("Image recieved, size: %u (bytes left in socket %u)",(uint)_encimg.size(),(uint)tcpsocket.bytesAvailable());
+            qDebug("Image recieved, size: %u (bytes left in socket %u)",(uint)_encimg.size(),(uint)tcpsocket.bytesAvailable());
             emit imageRecieved(_encimg);
 
         } break;
