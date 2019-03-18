@@ -72,8 +72,8 @@ void load_mini_batch (
 
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.05,0.05,5,cv::BORDER_REFLECT101,false);
-                /*if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = distortimage(_tmpmat,cvrng,0.03,cv::INTER_CUBIC,cv::BORDER_REFLECT101);*/
+                if(rnd.get_random_float() > 0.1f)
+                    _tmpmat = distortimage(_tmpmat,cvrng,0.03,cv::INTER_CUBIC,cv::BORDER_REFLECT101);
 
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.1f,0.3f,rnd.get_random_float()*180.0f);
@@ -93,10 +93,10 @@ void load_mini_batch (
                     cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat *= 0.5f + 1.0f*rnd.get_random_float();
+                    _tmpmat *= (0.4f + 1.0f*rnd.get_random_float());
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = addNoise(_tmpmat,cvrng,0,15);
+                    _tmpmat = addNoise(_tmpmat,cvrng,0,11);
 
                 dlib::matrix<dlib::rgb_pixel> _dlibtmpimg = cvmat2dlibmatrix<dlib::rgb_pixel>(_tmpmat);
                 dlib::disturb_colors(_dlibtmpimg,rnd);
@@ -193,12 +193,16 @@ int main(int argc, char** argv)
     cout << "-------------" << endl;
 
     auto trainobjs = load_classes_list(cmdparser.get<string>("traindir"));
-    cout << "trainobjs.size(): "<< trainobjs.size() << endl;        
+    cout << "trainobjs.size(): "<< trainobjs.size() << endl;
+    for(size_t i = 0; i < trainobjs.size(); ++i)
+	cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
 
     std::vector<std::vector<string>> validobjs;
     if(cmdparser.has("validdir")) {
         validobjs = load_classes_list(cmdparser.get<string>("validdir"));
         cout << "validobjs.size(): "<< validobjs.size() << endl;
+	for(size_t i = 0; i < validobjs.size(); ++i)
+           cout << "  label " << i << " - unique samples - " << validobjs[i].size() << endl;
     }
 
     int classes_per_minibatch = cmdparser.get<int>("classes");
@@ -322,7 +326,7 @@ int main(int argc, char** argv)
     float acc = -1.0f;
     if(validobjs.size() > 0) {
         cout << "Accuracy evaluation on validation set:" << endl;
-        acc = test_accuracy_on_set(validobjs,net,true,classes_per_minibatch,samples_per_class,30);
+        acc = test_accuracy_on_set(validobjs,net,true,classes_per_minibatch,50,20);
         cout << "Average validation accuracy: " << acc << endl;
     }
     std::vector<std::vector<string>> testobjs;
@@ -332,7 +336,7 @@ int main(int argc, char** argv)
     }
     if(testobjs.size() > 0) {
         cout << "Accuracy evaluation on test set:" << endl;
-        acc = test_accuracy_on_set(testobjs,net,true,classes_per_minibatch,samples_per_class);
+        acc = test_accuracy_on_set(testobjs,net,true,classes_per_minibatch,50);
         cout << "Average test accuracy: " << acc << endl;
     }
 

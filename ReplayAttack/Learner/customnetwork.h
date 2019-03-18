@@ -75,18 +75,20 @@ template <int N, int K, typename SUBNET> using adense4 = dense_block4<N,K,affine
 // training network type
 using net_type =    loss_multiclass_log<fc<2,
                             avg_pool_everything<dense2<64,FNUM,
+				avg_pool<2,2,2,2,dense3<64,FNUM,
                             avg_pool<2,2,2,2,dense3<64,FNUM,
                             relu<bn_con<con<FNUM,5,5,2,2,
                             input_rgb_image
-                            >>>>>>>>>;
+                            >>>>>>>>>>>;
 
 // testing network type (replaced batch normalization with fixed affine transforms)
 using anet_type =   loss_multiclass_log<fc<2,
                             avg_pool_everything<adense2<64,FNUM,
-							avg_pool<2,2,2,2,adense3<64,FNUM,
+				avg_pool<2,2,2,2,adense3<64,FNUM,
+			    avg_pool<2,2,2,2,adense3<64,FNUM,
                             relu<affine<con<FNUM,5,5,2,2,
                             input_rgb_image
-                            >>>>>>>>>;
+                            >>>>>>>>>>>;
 }
 
 #endif // CUSTOMNETWORK_H
