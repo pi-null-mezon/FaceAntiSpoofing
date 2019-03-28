@@ -167,7 +167,8 @@ const cv::String options = "{traindir  t  |      | path to directory with traini
                            "{samples      | 16   | samples per class in minibatch}"
                            "{bnwsize      | 100  | will be passed in set_all_bn_running_stats_window_sizes before net training}"
                            "{tiwp         | 5000 | train iterations without progress}"
-                           "{viwp         | 1000 | validation iterations without progress}";
+                           "{viwp         | 1000 | validation iterations without progress}"
+                           "{psalgo       | true | set prefer smallest algorithms}";
 
 int main(int argc, char** argv)
 {
@@ -210,7 +211,11 @@ int main(int argc, char** argv)
     int samples_per_class = cmdparser.get<int>("samples");
     cout << "Samples per class in minibatch will be used: " << samples_per_class << endl;
 
-    set_dnn_prefer_smallest_algorithms(); // larger minibatches will be available
+    if(cmdparser.get<bool>("psalgo"))
+        set_dnn_prefer_smallest_algorithms(); // larger minibatches will be available
+    else
+        set_dnn_prefer_fastest_algorithms();
+
     net_type net;
     set_all_bn_running_stats_window_sizes(net, cmdparser.get<unsigned>("bnwsize"));
     //cout << net << endl;
