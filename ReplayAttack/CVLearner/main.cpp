@@ -27,6 +27,34 @@ std::vector<std::vector<string>> load_classes_list (const string& dir)
     return objects;
 }
 
+std::vector<std::vector<std::vector<string>>> split_into_folds(const std::vector<std::vector<string>> &_objs, unsigned int _folds, dlib::rand& _rnd)
+{
+    std::vector<std::vector<std::vector<string>>> _output(_folds);
+    for(size_t i = 0; i < _output.size(); ++i)
+        _output[i] = std::vector<std::vector<string>>(_objs.size());
+
+    for(size_t i = 0; i < _objs.size(); ++i) {
+        for(size_t j = 0; j < _objs[i].size(); ++j) {
+            _output[_rnd.get_integer(_folds)][i].push_back(_objs[i][j]);
+        }
+    }
+    return _output;
+}
+
+std::vector<std::vector<string>> merge_except(const std::vector<std::vector<std::vector<string>>> &_objs, size_t _index)
+{
+    std::vector<std::vector<string>> _mergedobjs(_objs[0].size());
+    for(size_t i = 0; i < _objs.size(); ++i) {
+        if(i != _index) {
+            for(size_t j = 0; j < _mergedobjs.size(); ++j) {
+                _mergedobjs[j].insert(_mergedobjs[j].end(),_objs[i][j].begin(),_objs[i][j].end());
+            }
+        }
+    }
+    return _mergedobjs;
+}
+
+
 void load_mini_batch (
     const size_t num_classes,
     const size_t samples_per_class,
@@ -157,7 +185,8 @@ float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dl
 }
 
 const cv::String options = "{traindir  t  |      | path to directory with training data}"
-                           "{validdir  v  |      | path to directory with validation data}"
+                           "{cvfolds      |   5  | folds to use for cross validation training}"
+                           "{splitseed    |   1  | seed for data folds split}"
                            "{testdir      |      | path to directory with test data}"
                            "{outputdir o  |      | path to directory with output data}"
                            "{minlrthresh  | 1E-5 | path to directory with output data}"
@@ -173,7 +202,7 @@ const cv::String options = "{traindir  t  |      | path to directory with traini
 int main(int argc, char** argv)
 {
     cv::CommandLineParser cmdparser(argc,argv,options);
-    cmdparser.about("This app was designed to train dlib's format neural network");
+    cmdparser.about("This app was designed to train dlib's format neural network with cross validation training scheme");
     if(argc == 1) {
         cmdparser.printMessage();
         return 0;
@@ -196,15 +225,9 @@ int main(int argc, char** argv)
     auto trainobjs = load_classes_list(cmdparser.get<string>("traindir"));
     cout << "trainobjs.size(): "<< trainobjs.size() << endl;
     for(size_t i = 0; i < trainobjs.size(); ++i)
-	cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
-
-    std::vector<std::vector<string>> validobjs;
-    if(cmdparser.has("validdir")) {
-        validobjs = load_classes_list(cmdparser.get<string>("validdir"));
-        cout << "validobjs.size(): "<< validobjs.size() << endl;
-	for(size_t i = 0; i < validobjs.size(); ++i)
-           cout << "  label " << i << " - unique samples - " << validobjs[i].size() << endl;
-    }
+        cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
+    dlib::rand _foldsplitrnd(cmdparser.get<unsigned int>("splitseed"));
+    auto allobjsfolds = split_into_folds(trainobjs,cmdparser.get<unsigned int>("cvfolds"),_foldsplitrnd);
 
     int classes_per_minibatch = cmdparser.get<int>("classes");
     cout << "Classes per minibatch will be used:" << classes_per_minibatch << endl;
@@ -216,140 +239,153 @@ int main(int argc, char** argv)
     else
         set_dnn_prefer_fastest_algorithms();
 
-    net_type net;
-    set_all_bn_running_stats_window_sizes(net, cmdparser.get<unsigned>("bnwsize"));
-    //cout << net << endl;
+    for(size_t _fold = 0; _fold < allobjsfolds.size(); ++_fold) {
+        cout << endl << "Split # " << _fold << endl;
 
-    dnn_trainer<net_type> trainer(net,sgd(0.0001,0.9));
-    trainer.set_learning_rate(0.1);
-    trainer.be_verbose();
-    trainer.set_synchronization_file(cmdparser.get<string>("outputdir") + string("/trainer_") + sessionguid + string("_sync") , std::chrono::minutes(10));
-    if(cmdparser.has("learningrate"))
-        trainer.set_learning_rate(cmdparser.get<double>("learningrate"));
-    if(validobjs.size() > 0)
-        trainer.set_test_iterations_without_progress_threshold(cmdparser.get<int>("viwp"));
-    else
-        trainer.set_iterations_without_progress_threshold(cmdparser.get<int>("tiwp"));
+        trainobjs = merge_except(allobjsfolds,_fold);
+        cout << "trainobjs.size(): " << trainobjs.size() << endl;
+        for(size_t i = 0; i < trainobjs.size(); ++i)
+            cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
+        std::vector<std::vector<string>> validobjs = allobjsfolds[_fold];
+        cout << "validobjs.size(): " << validobjs.size() << endl;
+        for(size_t i = 0; i < validobjs.size(); ++i)
+            cout << "  label " << i << " - unique samples - " << validobjs[i].size() << endl;
 
-    dlib::pipe<std::vector<matrix<dlib::rgb_pixel>>> qimages(5);
-    dlib::pipe<std::vector<unsigned long>> qlabels(5);
-    auto data_loader = [classes_per_minibatch,samples_per_class,&qimages, &qlabels, &trainobjs](time_t seed)  {
+        net_type net;
+        set_all_bn_running_stats_window_sizes(net, cmdparser.get<unsigned>("bnwsize"));
+        //cout << net << endl;
 
-        dlib::rand rnd(time(nullptr)+seed);
-        cv::RNG cvrng(static_cast<uint64_t>(time(nullptr) + seed));
+        dnn_trainer<net_type> trainer(net,sgd(0.0001,0.9));
+        trainer.set_learning_rate(0.1);
+        trainer.be_verbose();
+        trainer.set_synchronization_file(cmdparser.get<string>("outputdir") + string("/trainer_") + sessionguid + string("_sync") , std::chrono::minutes(10));
+        if(cmdparser.has("learningrate"))
+            trainer.set_learning_rate(cmdparser.get<double>("learningrate"));
+        if(validobjs.size() > 0)
+            trainer.set_test_iterations_without_progress_threshold(cmdparser.get<int>("viwp"));
+        else
+            trainer.set_iterations_without_progress_threshold(cmdparser.get<int>("tiwp"));
 
-        std::vector<matrix<dlib::rgb_pixel>> images;
-        std::vector<unsigned long> labels;
+        dlib::pipe<std::vector<matrix<dlib::rgb_pixel>>> qimages(5);
+        dlib::pipe<std::vector<unsigned long>> qlabels(5);
+        auto data_loader = [classes_per_minibatch,samples_per_class,&qimages, &qlabels, &trainobjs](time_t seed)  {
 
-        while(qimages.is_enabled()) {
-            try {
-                load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, trainobjs, images, labels, true);
-                qimages.enqueue(images);
-                qlabels.enqueue(labels);
+            dlib::rand rnd(time(nullptr)+seed);
+            cv::RNG cvrng(static_cast<uint64_t>(time(nullptr) + seed));
+
+            std::vector<matrix<dlib::rgb_pixel>> images;
+            std::vector<unsigned long> labels;
+
+            while(qimages.is_enabled()) {
+                try {
+                    load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, trainobjs, images, labels, true);
+                    qimages.enqueue(images);
+                    qlabels.enqueue(labels);
+                }
+                catch(std::exception& e) {
+                    cout << "EXCEPTION IN LOADING DATA" << endl;
+                    cout << e.what() << endl;
+                }
             }
-            catch(std::exception& e) {
-                cout << "EXCEPTION IN LOADING DATA" << endl;
-                cout << e.what() << endl;
+        };
+        std::thread data_loader1([data_loader](){ data_loader(1); });
+        std::thread data_loader2([data_loader](){ data_loader(2); });
+        std::thread data_loader3([data_loader](){ data_loader(3); });
+        std::thread data_loader4([data_loader](){ data_loader(4); });
+
+        // Same for the test
+        dlib::pipe<std::vector<matrix<dlib::rgb_pixel>>> testqimages(1);
+        dlib::pipe<std::vector<unsigned long>> testqlabels(1);
+        auto testdata_loader = [classes_per_minibatch, samples_per_class,&testqimages, &testqlabels, &validobjs](time_t seed) {
+
+            dlib::rand rnd(time(nullptr)+seed);
+            cv::RNG cvrng(static_cast<uint64_t>(time(nullptr) + seed));
+
+            std::vector<matrix<dlib::rgb_pixel>> images;
+            std::vector<unsigned long> labels;
+
+            while(testqimages.is_enabled()) {
+                try {
+                    load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, validobjs, images, labels, false);
+                    testqimages.enqueue(images);
+                    testqlabels.enqueue(labels);
+                }
+                catch(std::exception& e)
+                {
+                    cout << "EXCEPTION IN LOADING DATA" << endl;
+                    cout << e.what() << endl;
+                }
+            }
+        };
+        std::thread testdata_loader1([testdata_loader](){ testdata_loader(1); });
+        if(validobjs.size() == 0) {
+            testqimages.disable();
+            testqlabels.disable();
+            testdata_loader1.join();
+        }
+
+        std::vector<matrix<dlib::rgb_pixel>> images, vimages;
+        std::vector<unsigned long> labels, vlabels;
+        cout << "-------------" << endl;
+        cout << "Wait while training will be accomplished:" << endl;
+        while(trainer.get_learning_rate() >= cmdparser.get<double>("minlrthresh"))  {
+            images.clear();
+            labels.clear();
+            qimages.dequeue(images);
+            qlabels.dequeue(labels);
+            trainer.train_one_step(images, labels);
+            if((validobjs.size() > 0) && ((trainer.get_train_one_step_calls() % 10) == 0)) {
+                vimages.clear();
+                vlabels.clear();
+                testqimages.dequeue(vimages);
+                testqlabels.dequeue(vlabels);
+                trainer.test_one_step(vimages,vlabels);
             }
         }
-    };
-    std::thread data_loader1([data_loader](){ data_loader(1); });
-    std::thread data_loader2([data_loader](){ data_loader(2); });
-    std::thread data_loader3([data_loader](){ data_loader(3); });
-    std::thread data_loader4([data_loader](){ data_loader(4); });
 
-    // Same for the test
-    dlib::pipe<std::vector<matrix<dlib::rgb_pixel>>> testqimages(1);
-    dlib::pipe<std::vector<unsigned long>> testqlabels(1);
-    auto testdata_loader = [classes_per_minibatch, samples_per_class,&testqimages, &testqlabels, &validobjs](time_t seed) {
+        // stop all the data loading threads and wait for them to terminate.
+        qimages.disable();
+        qlabels.disable();
+        data_loader1.join();
+        data_loader2.join();
+        data_loader3.join();
+        data_loader4.join();
 
-        dlib::rand rnd(time(nullptr)+seed);
-        cv::RNG cvrng(static_cast<uint64_t>(time(nullptr) + seed));
-
-        std::vector<matrix<dlib::rgb_pixel>> images;
-        std::vector<unsigned long> labels;
-
-        while(testqimages.is_enabled()) {
-            try {
-                load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, validobjs, images, labels, false);
-                testqimages.enqueue(images);
-                testqlabels.enqueue(labels);
-            }
-            catch(std::exception& e)
-            {
-                cout << "EXCEPTION IN LOADING DATA" << endl;
-                cout << e.what() << endl;
-            }
+        if(validobjs.size() > 0) {
+            testqimages.disable();
+            testqlabels.disable();
+            testdata_loader1.join();
         }
-    };
-    std::thread testdata_loader1([testdata_loader](){ testdata_loader(1); });    
-    if(validobjs.size() == 0) {
-        testqimages.disable();
-        testqlabels.disable();
-        testdata_loader1.join();
-    }
 
-    std::vector<matrix<dlib::rgb_pixel>> images, vimages;
-    std::vector<unsigned long> labels, vlabels;
-    cout << "-------------" << endl;
-    cout << "Wait while training will be accomplished:" << endl;
-    while(trainer.get_learning_rate() >= cmdparser.get<double>("minlrthresh"))  {
-        images.clear();
-        labels.clear();
-        qimages.dequeue(images);
-        qlabels.dequeue(labels);
-        trainer.train_one_step(images, labels);
-        if((validobjs.size() > 0) && ((trainer.get_train_one_step_calls() % 10) == 0)) {
-            vimages.clear();
-            vlabels.clear();
-            testqimages.dequeue(vimages);
-            testqlabels.dequeue(vlabels);
-            trainer.test_one_step(vimages,vlabels);
+        cout << "Training has been accomplished" << endl;
+
+        // Wait for training threads to stop
+        trainer.get_net();
+        net.clean();
+
+        float acc = -1.0f;
+        if(validobjs.size() > 0) {
+            cout << "Accuracy evaluation on validation set:" << endl;
+            acc = test_accuracy_on_set(validobjs,net,true,classes_per_minibatch,50,20);
+            cout << "Average validation accuracy: " << acc << endl;
         }
+        std::vector<std::vector<string>> testobjs;
+        if(cmdparser.has("testdir")) {
+            testobjs = load_classes_list(cmdparser.get<string>("testdir"));
+            cout << "testdir.size(): "<< testobjs.size() << endl;
+        }
+        if(testobjs.size() > 0) {
+            cout << "Accuracy evaluation on test set:" << endl;
+            acc = test_accuracy_on_set(testobjs,net,true,classes_per_minibatch,50);
+            cout << "Average test accuracy: " << acc << endl;
+        }
+
+        string _outputfilename = string("net_") + sessionguid + std::string("_split_") + std::to_string(_fold) + string(".dat");
+        if((validobjs.size() > 0) || (testobjs.size() > 0))
+            _outputfilename = string("net_") + sessionguid + std::string("_split_") + std::to_string(_fold) + string("_acc_") + to_string(acc) + string(".dat");
+        cout << "Wait untill weights will be serialized to " << _outputfilename << endl;
+        serialize(cmdparser.get<string>("outputdir") + string("/") + _outputfilename) << net;
     }
-
-    // stop all the data loading threads and wait for them to terminate.
-    qimages.disable();
-    qlabels.disable();
-    data_loader1.join();
-    data_loader2.join();
-    data_loader3.join();
-    data_loader4.join();
-
-    if(validobjs.size() > 0) {
-        testqimages.disable();
-        testqlabels.disable();
-        testdata_loader1.join();
-    }
-
-    cout << "Training has been accomplished" << endl;
-
-    // Wait for training threads to stop
-    trainer.get_net();
-    net.clean();    
-
-    float acc = -1.0f;
-    if(validobjs.size() > 0) {
-        cout << "Accuracy evaluation on validation set:" << endl;
-        acc = test_accuracy_on_set(validobjs,net,true,classes_per_minibatch,50,20);
-        cout << "Average validation accuracy: " << acc << endl;
-    }
-    std::vector<std::vector<string>> testobjs;
-    if(cmdparser.has("testdir")) {
-        testobjs = load_classes_list(cmdparser.get<string>("testdir"));
-        cout << "testdir.size(): "<< testobjs.size() << endl;
-    }
-    if(testobjs.size() > 0) {
-        cout << "Accuracy evaluation on test set:" << endl;
-        acc = test_accuracy_on_set(testobjs,net,true,classes_per_minibatch,50);
-        cout << "Average test accuracy: " << acc << endl;
-    }
-
-    string _outputfilename = string("net_") + sessionguid  + string(".dat");
-    if((validobjs.size() > 0) || (testobjs.size() > 0))
-        _outputfilename = string("net_") + sessionguid  + string("_acc_") + to_string(acc) + string(".dat");
-    cout << "Wait untill weights will be serialized to " << _outputfilename << endl;
-    serialize(cmdparser.get<string>("outputdir") + string("/") + _outputfilename) << net;
     cout << "Done" << endl;
     return 0;
 }
