@@ -258,7 +258,7 @@ int main(int argc, char** argv)
         dnn_trainer<net_type> trainer(net,sgd(0.0001,0.9));
         trainer.set_learning_rate(0.1);
         trainer.be_verbose();
-        trainer.set_synchronization_file(cmdparser.get<string>("outputdir") + string("/trainer_") + sessionguid + string("_sync") , std::chrono::minutes(10));
+        trainer.set_synchronization_file(cmdparser.get<string>("outputdir") + string("/trainer_") + sessionguid + std::string("_split_") + std::to_string(_fold) + string("_sync") , std::chrono::minutes(10));
         if(cmdparser.has("learningrate"))
             trainer.set_learning_rate(cmdparser.get<double>("learningrate"));
         if(validobjs.size() > 0)
