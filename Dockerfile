@@ -83,7 +83,7 @@ RUN wget https://github.com/davisking/dlib-models/raw/master/shape_predictor_5_f
 	
 # Prepare web server
 RUN mkdir -p /home/Testdata && \
-	printf '#!/bin/bash\nspoofingsrv -p8080 &\npython3 httpsrv.py' > serve && \
+	printf '#!/bin/bash\nantispoofingsrv -p8080 &\npython3 httpsrv.py' > serve && \
 	chmod +x serve
 
 # This port is listening by oirtweb server by default
