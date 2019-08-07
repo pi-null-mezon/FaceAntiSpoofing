@@ -98,23 +98,23 @@ void load_mini_batch (
                     cv::flip(_tmpmat,_tmpmat,1);
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.05,0.05,7,cv::BORDER_CONSTANT,cv::Scalar(0),false);
+                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.05,0.05,9,cv::BORDER_CONSTANT,cv::Scalar(0),false);
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = distortimage(_tmpmat,cvrng,0.05,cv::INTER_CUBIC,cv::BORDER_CONSTANT,cv::Scalar(0));
 
                 /*if(rnd.get_random_float() > 0.1f)
                     _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.1f,0.3f,rnd.get_random_float()*180.0f);
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.1f,0.3f,rnd.get_random_float()*180.0f);
+                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.1f,0.3f,rnd.get_random_float()*180.0f);*/
 
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),0,0.2f,0.4f,rnd.get_random_float()*180.0f);
+                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),0,0.3f,0.3f,rnd.get_random_float()*180.0f);
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),1,0.2f,0.4f,rnd.get_random_float()*180.0f);
+                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),1,0.3f,0.3f,rnd.get_random_float()*180.0f);
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = cutoutRect(_tmpmat,0,rnd.get_random_float(),0.2f,0.4f,rnd.get_random_float()*180.0f);
+                    _tmpmat = cutoutRect(_tmpmat,0,rnd.get_random_float(),0.3f,0.3f,rnd.get_random_float()*180.0f);
                 if(rnd.get_random_float() > 0.1f)
-                    _tmpmat = cutoutRect(_tmpmat,1,rnd.get_random_float(),0.2f,0.4f,rnd.get_random_float()*180.0f);*/
+                    _tmpmat = cutoutRect(_tmpmat,1,rnd.get_random_float(),0.3f,0.3f,rnd.get_random_float()*180.0f);
 
                 if(rnd.get_random_float() > 0.5f)
                     cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
@@ -125,10 +125,17 @@ void load_mini_batch (
                 if(rnd.get_random_float() > 0.1f)
                     _tmpmat = addNoise(_tmpmat,cvrng,0,11);
 
+
+		if((rnd.get_random_float() > 0.8f) && (id == 1)) { // only for attack label
+			cv::cvtColor(_tmpmat,_tmpmat,CV_BGR2GRAY);
+			cv::Mat _chmat[] = {_tmpmat,_tmpmat,_tmpmat};
+			cv::merge(_chmat,3,_tmpmat);
+		}
+
                 std::vector<unsigned char> _bytes;
                 std::vector<int> compression_params;
                 compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-                compression_params.push_back(rnd.get_integer_in_range(20,100));
+                compression_params.push_back(static_cast<int>(rnd.get_integer_in_range(40,100)));
                 cv::imencode("*.jpg",_tmpmat,_bytes,compression_params);
                 _tmpmat = cv::imdecode(_bytes,cv::IMREAD_UNCHANGED);
 
@@ -165,7 +172,7 @@ float test_accuracy_on_set(const std::vector<std::vector<string>> &_testobjs, dl
     std::vector<matrix<dlib::rgb_pixel>> images;
     std::vector<unsigned long> labels;
     for(size_t i = 0; i < vacc.size(); ++i) {
-        load_mini_batch(_classes, _samples, rnd, cvrng, _testobjs, images, labels, true);
+        load_mini_batch(_classes, _samples, rnd, cvrng, _testobjs, images, labels, false);
         std::vector<unsigned long> predictedlabels = anet(images);
         for(size_t j = 0; j < images.size(); ++j) {
             if(predictedlabels[j] == labels[j])
@@ -192,14 +199,14 @@ const cv::String options = "{traindir  t  |       | path to directory with train
                            "{splitseed    |   1   | seed for data folds split}"
                            "{testdir      |       | path to directory with test data}"
                            "{outputdir o  |       | path to directory with output data}"
-                           "{minlrthresh  | 1E-5  | path to directory with output data}"
+                           "{minlrthresh  | 1E-4  | path to directory with output data}"
                            "{sessionguid  |       | session guid}"
                            "{learningrate |       | initial learning rate}"
-                           "{classes      | 2     | classes per minibatch}"
-                           "{samples      | 64    | samples per class in minibatch}"
+                           "{classes c    | 2     | classes per minibatch}"
+                           "{samples s    | 64    | samples per class in minibatch}"
                            "{bnwsize      | 100   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
                            "{tiwp         | 10000 | train iterations without progress}"
-                           "{viwp         | 2000  | validation iterations without progress}"
+                           "{viwp         | 75    | validation iterations without progress}"
                            "{psalgo       | true  | set prefer smallest algorithms}";
 
 int main(int argc, char** argv)
