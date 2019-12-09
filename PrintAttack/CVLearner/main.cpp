@@ -17,12 +17,16 @@ using namespace std;
 std::vector<std::vector<string>> load_classes_list (const string& dir)
 {
     std::vector<std::vector<string>> objects;
+    size_t _label = 0;
     for(auto subdir : directory(dir).get_dirs()) {
         std::vector<string> imgs;
         for(auto img : subdir.get_files())
             imgs.push_back(img);
-        if(imgs.size() != 0)
+        if(imgs.size() != 0) {
+            std::cout << "Label " << _label << " - '" << subdir.name() << "'" << std::endl;
             objects.push_back(imgs);
+            _label++;
+        }
     }
     return objects;
 }
@@ -127,7 +131,7 @@ void load_mini_batch (
 
 
 		if((rnd.get_random_float() > 0.8f) && (id == 1)) { // only for attack label
-			cv::cvtColor(_tmpmat,_tmpmat,CV_BGR2GRAY);
+			cv::cvtColor(_tmpmat,_tmpmat,cv::COLOR_BGR2GRAY);
 			cv::Mat _chmat[] = {_tmpmat,_tmpmat,_tmpmat};
 			cv::merge(_chmat,3,_tmpmat);
 		}
