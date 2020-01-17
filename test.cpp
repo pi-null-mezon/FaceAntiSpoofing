@@ -11,7 +11,7 @@ using namespace std;
 int main(int argc,char**argv)
 {
     dlib::anet_type net;
-    dlib::deserialize("/print_attack_net_v6.dat") >> net;
+    dlib::deserialize("./print_attack_net_v6.dat") >> net;
     dlib::matrix<dlib::rgb_pixel> img;
     cv::Mat image = cv::imread(argv[1]);
     cv::resize(image,image,cv::Size(100,100));
