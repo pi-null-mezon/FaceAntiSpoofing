@@ -17,13 +17,17 @@ using namespace std;
 std::vector<std::vector<string>> load_classes_list (const string& dir)
 {
     std::vector<std::vector<string>> objects;
+    unsigned int label = 0;
     for(auto subdir : directory(dir).get_dirs()) {
         std::vector<string> imgs;
         for(auto img : subdir.get_files())
             imgs.push_back(img);
-        if(imgs.size() != 0)
+        if(imgs.size() != 0) {
             objects.push_back(imgs);
+            std::cout << "Label # " << label++  << " - " << subdir.name() << std::endl;
+        }
     }
+    std::cout << "-------------" << std::endl;
     return objects;
 }
 
