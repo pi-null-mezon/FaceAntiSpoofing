@@ -16,18 +16,21 @@ using namespace std;
 
 std::vector<std::vector<string>> load_classes_list (const string& dir)
 {
+    std::vector<directory> subdirs = directory(dir).get_dirs();
+    std::sort(subdirs.begin(),subdirs.end());
+
     std::vector<std::vector<string>> objects;
-    unsigned int label = 0;
-    for(auto subdir : directory(dir).get_dirs()) {
+    size_t _label = 0;
+    for(auto subdir : subdirs) {
         std::vector<string> imgs;
         for(auto img : subdir.get_files())
             imgs.push_back(img);
         if(imgs.size() != 0) {
+            std::cout << "Label " << _label << " - '" << subdir.name() << "'" << std::endl;
             objects.push_back(imgs);
-            std::cout << "Label # " << label++  << " - " << subdir.name() << std::endl;
+            _label++;
         }
     }
-    std::cout << "-------------" << std::endl;
     return objects;
 }
 

@@ -31,6 +31,7 @@ std::vector<std::vector<string>> load_classes_list (const string& dir)
             _label++;
         }
     }
+    std::cout << "-----------------" << std::endl;
     return objects;
 }
 
@@ -213,9 +214,10 @@ const cv::String options = "{traindir  t  |       | path to directory with train
                            "{learningrate |       | initial learning rate}"
                            "{classes c    | 3     | classes per minibatch}"
                            "{samples s    | 96    | samples per class in minibatch}"
-                           "{bnwsize      | 256   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
+                           "{bnwsize      | 512   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
                            "{tiwp         | 10000 | train iterations without progress}"
                            "{viwp         | 300   | validation iterations without progress}"
+                           "{taugm        | true  | apply train time augmentation}"
                            "{psalgo       | true  | set prefer smallest algorithms}";
 
 int main(int argc, char** argv)
@@ -249,9 +251,12 @@ int main(int argc, char** argv)
     auto allobjsfolds = split_into_folds(trainobjs,cmdparser.get<unsigned int>("cvfolds"),_foldsplitrnd);
 
     size_t classes_per_minibatch = static_cast<unsigned long>(cmdparser.get<int>("classes"));
-    cout << "Classes per minibatch will be used:" << classes_per_minibatch << endl;
+    cout << "Classes per minibatch will be used: " << classes_per_minibatch << endl;
     size_t samples_per_class = static_cast<unsigned long>(cmdparser.get<int>("samples"));
     cout << "Samples per class in minibatch will be used: " << samples_per_class << endl;
+
+    const bool train_time_augmentation = cmdparser.get<bool>("taugm");
+    cout << "Train time augmentation: " << train_time_augmentation << endl;
 
     if(cmdparser.get<bool>("psalgo"))
         set_dnn_prefer_smallest_algorithms(); // larger minibatches will be available
@@ -287,7 +292,7 @@ int main(int argc, char** argv)
 
         dlib::pipe<std::vector<matrix<dlib::rgb_pixel>>> qimages(5);
         dlib::pipe<std::vector<unsigned long>> qlabels(5);
-        auto data_loader = [classes_per_minibatch,samples_per_class,&qimages, &qlabels, &trainobjs](time_t seed)  {
+        auto data_loader = [classes_per_minibatch,samples_per_class,&qimages, &qlabels, &trainobjs, &train_time_augmentation] (time_t seed)  {
 
             dlib::rand rnd(time(nullptr)+seed);
             cv::RNG cvrng(static_cast<uint64_t>(time(nullptr) + seed));
@@ -297,7 +302,7 @@ int main(int argc, char** argv)
 
             while(qimages.is_enabled()) {
                 try {
-                    load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, trainobjs, images, labels, true);
+                    load_mini_batch(classes_per_minibatch, samples_per_class, rnd, cvrng, trainobjs, images, labels, train_time_augmentation);
                     qimages.enqueue(images);
                     qlabels.enqueue(labels);
                 }
