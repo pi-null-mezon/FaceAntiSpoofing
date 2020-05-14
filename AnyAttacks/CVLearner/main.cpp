@@ -16,9 +16,12 @@ using namespace std;
 
 std::vector<std::vector<string>> load_classes_list (const string& dir)
 {
+    std::vector<directory> subdirs = directory(dir).get_dirs();
+    std::sort(subdirs.begin(),subdirs.end());
+
     std::vector<std::vector<string>> objects;
     size_t _label = 0;
-    for(auto subdir : directory(dir).get_dirs()) {
+    for(auto subdir : subdirs) {
         std::vector<string> imgs;
         for(auto img : subdir.get_files())
             imgs.push_back(img);
@@ -92,12 +95,12 @@ void load_mini_batch (
             if(objs[id].size() == samples_per_class)
                 obj = objs[id][j];
             else
-                obj = objs[id][rnd.get_random_32bit_number() % objs[id].size()];           
+                obj = objs[id][rnd.get_random_32bit_number() % objs[id].size()];
 
             _tmpmat = loadIbgrmatWsize(obj,IMG_WIDTH,IMG_HEIGHT,false,&_isloaded);
             assert(_isloaded);
 
-            if(_doaugmentation) {                
+            if(_doaugmentation) {
                 if(rnd.get_random_float() > 0.5f)
                     cv::flip(_tmpmat,_tmpmat,1);
 
