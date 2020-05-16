@@ -144,7 +144,7 @@ void load_mini_batch (
                     std::vector<unsigned char> _bytes;
                     std::vector<int> compression_params;
                     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-                    compression_params.push_back(static_cast<int>(rnd.get_integer_in_range(50,85)));
+                    compression_params.push_back(static_cast<int>(rnd.get_integer_in_range(50,95)));
                     cv::imencode("*.jpg",_tmpmat,_bytes,compression_params);
                     _tmpmat = cv::imdecode(_bytes,cv::IMREAD_UNCHANGED);
                 }
@@ -246,10 +246,11 @@ int main(int argc, char** argv)
     auto trainobjs = load_classes_list(cmdparser.get<string>("traindir"));
     cout << "trainobjs.size(): "<< trainobjs.size() << endl;
     for(size_t i = 0; i < trainobjs.size(); ++i)
-        cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
+        cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl << endl;
     dlib::rand _foldsplitrnd(cmdparser.get<unsigned int>("splitseed"));
     auto allobjsfolds = split_into_folds(trainobjs,cmdparser.get<unsigned int>("cvfolds"),_foldsplitrnd);
 
+    cout << "-------------" << endl;
     size_t classes_per_minibatch = static_cast<unsigned long>(cmdparser.get<int>("classes"));
     cout << "Classes per minibatch will be used: " << classes_per_minibatch << endl;
     size_t samples_per_class = static_cast<unsigned long>(cmdparser.get<int>("samples"));
