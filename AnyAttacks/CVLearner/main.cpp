@@ -156,7 +156,11 @@ void load_mini_batch (
                 images.push_back(_dlibtmpimg);
             } else {
                 if(rnd.get_random_float() > 0.5f)
-                    cv::flip(_tmpmat,_tmpmat,1);
+                    cv::flip(_tmpmat,_tmpmat,1);               
+                /*if(rnd.get_random_float() > 0.5f)
+                    _tmpmat *= static_cast<double>(0.9f + 0.2f*rnd.get_random_float());
+                if(rnd.get_random_float() > 0.5f)
+                    _tmpmat = addNoise(_tmpmat,cvrng,0,3);*/
                 //cv::imshow(string("Ordinary ") + to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())),_tmpmat);
                 //cv::waitKey(0);
                 images.push_back(cvmat2dlibmatrix<dlib::rgb_pixel>(_tmpmat));
@@ -212,9 +216,9 @@ const cv::String options = "{traindir  t  |       | path to directory with train
                            "{minlrthresh  | 1E-5  | path to directory with output data}"
                            "{sessionguid  |       | session guid}"
                            "{learningrate |       | initial learning rate}"
-                           "{classes c    | 3     | classes per minibatch}"
-                           "{samples s    | 96    | samples per class in minibatch}"
-                           "{bnwsize      | 512   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
+                           "{classes c    | 4     | classes per minibatch}"
+                           "{samples s    | 64    | samples per class in minibatch}"
+                           "{bnwsize      | 256   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
                            "{tiwp         | 10000 | train iterations without progress}"
                            "{viwp         | 300   | validation iterations without progress}"
                            "{taugm        | true  | apply train time augmentation}"
@@ -246,18 +250,18 @@ int main(int argc, char** argv)
     auto trainobjs = load_classes_list(cmdparser.get<string>("traindir"));
     cout << "trainobjs.size(): "<< trainobjs.size() << endl;
     for(size_t i = 0; i < trainobjs.size(); ++i)
-        cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl << endl;
+        cout << "  label " << i << " - unique samples - " << trainobjs[i].size() << endl;
     dlib::rand _foldsplitrnd(cmdparser.get<unsigned int>("splitseed"));
     auto allobjsfolds = split_into_folds(trainobjs,cmdparser.get<unsigned int>("cvfolds"),_foldsplitrnd);
 
-    cout << "-------------" << endl;
+    cout << endl << "-------------" << endl;
     size_t classes_per_minibatch = static_cast<unsigned long>(cmdparser.get<int>("classes"));
     cout << "Classes per minibatch will be used: " << classes_per_minibatch << endl;
     size_t samples_per_class = static_cast<unsigned long>(cmdparser.get<int>("samples"));
     cout << "Samples per class in minibatch will be used: " << samples_per_class << endl;
-
     const bool train_time_augmentation = cmdparser.get<bool>("taugm");
     cout << "Train time augmentation: " << train_time_augmentation << endl;
+    cout << "-------------" << endl;
 
     if(cmdparser.get<bool>("psalgo"))
         set_dnn_prefer_smallest_algorithms(); // larger minibatches will be available
