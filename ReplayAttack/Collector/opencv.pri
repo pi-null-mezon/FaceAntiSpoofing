@@ -45,6 +45,7 @@ win32 {
     message(OpenCV library version $${OPENCV_DIR}/$${OPENCV_ARCHITECTURE_DIR}/$${OPENCV_COMPILER_DIR} will be used)
 
 } else {
+    INCLUDEPATH += /usr/local/include/opencv4
     LIBS += -L/usr/local/lib
 
     LIBS += -lopencv_core \

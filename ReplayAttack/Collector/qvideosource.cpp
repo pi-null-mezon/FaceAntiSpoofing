@@ -39,7 +39,7 @@ void QVideoSource::_grabFrame()
         if(cvvideocapture.read(_frame)) {
             cv::imshow(APP_NAME,_frame);
             if(cv::waitKey(1) == 's')
-                cvvideocapture.set(CV_CAP_PROP_SETTINGS,0.0);
+                cvvideocapture.set(cv::CAP_PROP_SETTINGS,0.0);
             emit frameUpdated(_frame);            
         }
     }
