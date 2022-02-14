@@ -52,7 +52,7 @@ RUN git clone https://github.com/davisking/dlib.git dlib && \
     ldconfig && \
     cd ../../ && rm -rf dlib
 
-# Install Qt5 	
+# Install Qt5
 RUN apt-get install -y qt5-default
 
 # Install Python3 with webserver packages

@@ -6,7 +6,7 @@
 #define IMG_WIDTH  150
 #define IMG_HEIGHT 150
 
-#define FNUM 16
+#define FNUM 32
 
 namespace dlib {
 
@@ -73,26 +73,22 @@ template <typename SUBNET> using alevel4 = ares<FNUM,ares<FNUM,ares<FNUM,SUBNET>
 
 
 // training network type
-using net_type = loss_multiclass_log<fc<4,avg_pool_everything<
+using net_type = loss_multiclass_log<fc<2,avg_pool_everything<
                                                  level0<
                                                      level1<
                                                          level2<
                                                              level3<
                                                                  level4<
-                                                                     max_pool<3,3,2,2,relu<bn_con<con<FNUM,7,7,2,2,
-                                                                                                          input_rgb_image
-                                                                                                          >>>>>>>>>>>>;
+                                                                     avg_pool<3,3,2,2,relu<bn_con<con<FNUM,7,7,2,2,input_rgb_image>>>>>>>>>>>>;
 
 // testing network type (replaced batch normalization with fixed affine transforms)
-using anet_type = loss_multiclass_log<fc<4,avg_pool_everything<
+using anet_type = loss_multiclass_log<fc<2,avg_pool_everything<
                                                   alevel0<
                                                       alevel1<
                                                           alevel2<
                                                               alevel3<
                                                                   alevel4<
-                                                                      max_pool<3,3,2,2,relu<affine<con<FNUM,7,7,2,2,
-                                                                                                           input_rgb_image
-                                                                                                           >>>>>>>>>>>>;
+                                                                      avg_pool<3,3,2,2,relu<affine<con<FNUM,7,7,2,2,input_rgb_image>>>>>>>>>>>>;
 
 }
 

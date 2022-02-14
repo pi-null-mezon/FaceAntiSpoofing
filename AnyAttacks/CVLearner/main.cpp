@@ -22,9 +22,9 @@ std::vector<std::vector<string>> load_classes_list (const string& dir)
     std::cout << "-----------------" << std::endl;
     std::vector<std::vector<string>> objects;
     size_t _label = 0;   
-    for(auto subdir : subdirs) {
+    for(const auto &subdir : subdirs) {
         std::vector<string> imgs;
-        for(auto img : subdir.get_files())
+        for(const auto &img : subdir.get_files())
             imgs.push_back(img);
         if(imgs.size() != 0) {
             std::cout << "Label " << _label << " - '" << subdir.name() << "'" << std::endl;
@@ -103,19 +103,19 @@ void load_mini_batch (
             assert(_isloaded);
 
             if(_doaugmentation) {
-                if(rnd.get_random_float() > 0.75f)
-                    cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
+                /*if(rnd.get_random_float() > 0.75f)
+                    cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));*/
 
                 if(rnd.get_random_float() > 0.5f)
                     cv::flip(_tmpmat,_tmpmat,1);
 
-                if(rnd.get_random_float() > 0.5f)
-                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.2,0.2,20,cv::BORDER_CONSTANT,cv::Scalar(0),false);
-                if(rnd.get_random_float() > 0.5f)
-                    _tmpmat = distortimage(_tmpmat,cvrng,0.01,cv::INTER_CUBIC,cv::BORDER_CONSTANT,cv::Scalar(0));
+                /*if(rnd.get_random_float() > 0.5f)
+                    _tmpmat = jitterimage(_tmpmat,cvrng,cv::Size(0,0),0.1,0.1,10,cv::BORDER_CONSTANT,cv::Scalar(0),false);*/
+                /*if(rnd.get_random_float() > 0.5f)
+                    _tmpmat = distortimage(_tmpmat,cvrng,0.01,cv::INTER_CUBIC,cv::BORDER_CONSTANT,cv::Scalar(0));*/
 
-                if(rnd.get_random_float() > 0.5f)
-                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.5f,0.5f,rnd.get_random_float()*180.0f);
+                /*if(rnd.get_random_float() > 0.5f)
+                    _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.5f,0.5f,rnd.get_random_float()*180.0f);*/
                 /*if(rnd.get_random_float() > 0.5f)
                     _tmpmat = cutoutRect(_tmpmat,rnd.get_random_float(),rnd.get_random_float(),0.3f,0.3f,rnd.get_random_float()*180.0f);
 
@@ -130,16 +130,16 @@ void load_mini_batch (
 
 
                 if(rnd.get_random_float() > 0.5f)
-                    _tmpmat *= static_cast<double>(0.7f + 0.6f*rnd.get_random_float());
+                    _tmpmat *= static_cast<double>(0.8f + 0.4f*rnd.get_random_float());
 
                 if(rnd.get_random_float() > 0.5f)
-                    _tmpmat = addNoise(_tmpmat,cvrng,0,rnd.get_integer_in_range(1,13));
+                    _tmpmat = addNoise(_tmpmat,cvrng,0,rnd.get_integer_in_range(1,7));
 
-                if(rnd.get_random_float() > 0.75f)
-                    cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));
+                /*if(rnd.get_random_float() > 0.75f)
+                    cv::blur(_tmpmat,_tmpmat,cv::Size(3,3));*/
 
 
-                if((rnd.get_random_float() > 0.5f) && (id != 0)) { // only for attack labels
+                if((rnd.get_random_float() > 0.9f) && (id != 0)) { // only for attack labels
                     cv::cvtColor(_tmpmat,_tmpmat,cv::COLOR_BGR2GRAY);
                     cv::Mat _chmat[] = {_tmpmat,_tmpmat,_tmpmat};
                     cv::merge(_chmat,3,_tmpmat);
@@ -279,11 +279,11 @@ const cv::String options = "{traindir  t  |       | path to directory with train
                            "{minlrthresh  | 1E-5  | path to directory with output data}"
                            "{sessionguid  |       | session guid}"
                            "{learningrate |       | initial learning rate}"
-                           "{classes c    | 4     | classes per minibatch}"
+                           "{classes c    | 2     | classes per minibatch}"
                            "{samples s    | 64    | samples per class in minibatch}"
-                           "{bnwsize      | 256   | will be passed in set_all_bn_running_stats_window_sizes before net training}"
-                           "{tiwp         | 10000 | train iterations without progress}"
-                           "{viwp         | 300   | validation iterations without progress}"
+                           "{bnwsize      | 1024  | will be passed in set_all_bn_running_stats_window_sizes before net training}"
+                           "{tiwp         | 5000  | train iterations without progress}"
+                           "{viwp         | 512   | validation iterations without progress}"
                            "{taugm        | true  | apply train time augmentation}"
                            "{psalgo       | true  | set prefer smallest algorithms}";
 
